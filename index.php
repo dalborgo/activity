@@ -59,11 +59,18 @@ while (($ra = mysqli_fetch_assoc($res))) {
     $phpdate = strtotime( $ra["ora_fine"] );
     $mysqldate_f = date( 'H:i', $phpdate );
     $clpau='';
+    $ico='';
     if ($ra["tipo"] != 'pausa')
         $mini+=$ra["minuti"];
     else{
         $clpau='forpau';
         $ra["cliente"]='';
+    }
+    if($ra["tipo"] == 'telefonata'){
+        $ico='<img src="img/tel.png">';
+    }
+    if($ra["tipo"] == 'remoto'){
+            $ico='<img src="img/supremo.png">';
     }
     $min=gmdate("H:i", $ra["minuti"]*60);
     $sp = explode(" ", $mysqldate);
@@ -71,7 +78,7 @@ while (($ra = mysqli_fetch_assoc($res))) {
     $out .= '<tr class="'.$clpau.'">
 <td>' . $ra["proj"] . '</td>
 <td>' . $ra["cliente"] . '</td>
-<td>' . ucfirst($ra["descr"]) . '</td>
+<td>'.$ico.' ' . ucfirst($ra["descr"]) . '</td>
 <td align="center">' . $sp[1] . '</td>
 <td align="center">' .  $mysqldate_f . '</td>
 <td align="center">' . $min . '</td>
@@ -110,6 +117,7 @@ while (($ra = mysqli_fetch_assoc($res))) {
 </tr>';
 }
 $min3=gmdate("H:i", $mini2);
+$min4=gmdate("H:i:s", $mini2);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -172,7 +180,7 @@ $min3=gmdate("H:i", $mini2);
                      <span class="text-muted">Something else</span>
                  </div>
                  <div class="col-6 col-sm-3 placeholder">
-                     <img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail"><h4>Telefonate Gestite</h4>
+                     <img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">
                      <h4>Label</h4>
                      <span class="text-muted">Something else</span>
                  </div>
@@ -208,7 +216,7 @@ $min3=gmdate("H:i", $mini2);
             </div>
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-sm-12"><h4>Telefonate Gestite</h4></div>
+                    <div class="col-sm-12"><h4>Telefonate Gestite <span style="font-size:small">Tot: <?=$min4?></span></h4></div>
                 </div>
             </div>
             <div class="table-responsive">
