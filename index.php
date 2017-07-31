@@ -18,9 +18,6 @@ else{
     $res = query("SELECT DAY(data) as giorno FROM `activity` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' ORDER BY data desc LIMIT 1", $conn, true);
     $giorno = $res["giorno"];
 }
-
-
-
 $res = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `activity` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data", $conn);
 $out3 = '';
 while (($ra = mysqli_fetch_assoc($res))) {
@@ -35,8 +32,6 @@ while (($ra = mysqli_fetch_assoc($res))) {
     }
     $out3.='<li class="nav-item '.$act.'"><a class="nav-link" href="index.php?mese='.$mmx.'">'.$mesix.' '.$sce.'</a></li>';
 }
-
-
 $res = query("SELECT DISTINCT(date(data)) as data FROM `activity` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
 $out2 = '';
 while (($ra = mysqli_fetch_assoc($res))) {
@@ -76,13 +71,45 @@ while (($ra = mysqli_fetch_assoc($res))) {
     $out .= '<tr class="'.$clpau.'">
 <td>' . $ra["proj"] . '</td>
 <td>' . $ra["cliente"] . '</td>
-<td>' . $ra["descr"] . '</td>
+<td>' . ucfirst($ra["descr"]) . '</td>
 <td align="center">' . $sp[1] . '</td>
 <td align="center">' .  $mysqldate_f . '</td>
 <td align="center">' . $min . '</td>
 </tr>';
 }
 $min2=gmdate("H:i", $mini*60);
+$mini2=0;
+$res = query("SELECT data, verso, minuti, ora_fine, act_phone.id_cliente, nome FROM `act_phone` left join act_cliente on act_phone.id_cliente = act_cliente.id_cliente WHERE DATE(data) = '$ricerca' ORDER BY minuti desc", $conn);
+$out4 = '';
+while (($ra = mysqli_fetch_assoc($res))) {
+    $phpdate = strtotime( $ra["data"] );
+    $mysqldate = date( 'd/m/Y H:i', $phpdate );
+    $phpdate = strtotime( $ra["ora_fine"] );
+    $mysqldate_f = date( 'H:i', $phpdate );
+    $clpau='';
+    $mmm=explode(":",$ra["minuti"]);
+    $mini2+=(intval($mmm[0])*3600+intval($mmm[1])*60+intval($mmm[2]));
+    //$mini2=120;
+    if ($ra["verso"] == 1){
+        $verso='<img src="img/go-button2.png">';
+    }
+    else{
+        $verso='<img src="img/go-button1.png">';
+        //$clpau='forpau';
+        //$ra["cliente"]='';
+    }
+    $min=$mmm[0].':'.$mmm[1];
+    $sp = explode(" ", $mysqldate);
+    $out4 .= '<tr class="'.$clpau.'">
+<td align="center">' . $verso . '</td>
+<td>' . $ra["nome"] . '</td>
+<td align="center">' . $ra["id_cliente"] . '</td>
+<td align="center">' . $sp[1] . '</td>
+<td align="center">' .  $mysqldate_f . '</td>
+<td align="center"><abbr title="'.$ra["minuti"].'">' . $min . '</abbr></td>
+</tr>';
+}
+$min3=gmdate("H:i", $mini2);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,7 +132,7 @@ $min2=gmdate("H:i", $mini*60);
             aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="#">Mesi:</a>
+    <img src="img/ico.png" alt="Logo Asten" width="34" style="margin-right: 10px"><a class="navbar-brand" href="#">Mesi:</a>
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
             <?=$out3?>
@@ -124,12 +151,20 @@ $min2=gmdate("H:i", $mini*60);
             </ul>
         </nav>
         <main class="col-sm-9 offset-sm-3 col-md-10 offset-md-2 pt-3">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-9">
             <h2>Attività di <?=$mesi[intval($mm)]?>: <span class="blu">Marco Dal Borgo</span></h2>
+            <h4>Data: <span class="blu"><?=$data_corr?></span></h4>
+                    </div>
+                    <div class="col-md-3" style="text-align: right"><img src="img/sc.png" width="80" class="img-fluid rounded-circle logo pull-right" alt="Sceriffo" ></div>
+                </div>
+            </div>
             <!-- <section class="row text-center placeholders">
                  <div class="col-6 col-sm-3 placeholder">
                      <img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">
                      <h4>Label</h4>
-                     <div class="text-muted">Something else</div>
+                     <div class="text-muted">Something else</div>ufficio_fotocop
                  </div>
                  <div class="col-6 col-sm-3 placeholder">
                      <img src="data:image/gif;base64,R0lGODlhAQABAIABAADcgwAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">
@@ -137,7 +172,7 @@ $min2=gmdate("H:i", $mini*60);
                      <span class="text-muted">Something else</span>
                  </div>
                  <div class="col-6 col-sm-3 placeholder">
-                     <img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">
+                     <img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail"><h4>Telefonate Gestite</h4>
                      <h4>Label</h4>
                      <span class="text-muted">Something else</span>
                  </div>
@@ -147,7 +182,7 @@ $min2=gmdate("H:i", $mini*60);
                      <span class="text-muted">Something else</span>
                  </div>
              </section>-->
-            <h4>Data: <span class="blu"><?=$data_corr?></span></h4>
+
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -165,8 +200,36 @@ $min2=gmdate("H:i", $mini*60);
                     </tbody>
                     <tfoot>
                     <tr>
-                        <td colspan="5" align="right"><strong>Totale:</strong></td>
+                        <td colspan="5" align="right"><strong>Totale lavorato:</strong></td>
                         <td colspan="1" align="center"><?=$min2?></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-12"><h4>Telefonate Gestite</h4></div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th style="text-align: center">In/Out</th>
+                        <th>Cliente</th>
+                        <th style="text-align: center">Numero</th>
+                        <th style="text-align: center">Ora Inizio</th>
+                        <th style="text-align: center">Ora Fine</th>
+                        <th style="text-align: center">Tempo</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?=$out4?>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="5" align="right"><strong>Totale:</strong></td>
+                        <td colspan="1" align="center"><?=$min3?></td>
                     </tr>
                     </tfoot>
                 </table>
