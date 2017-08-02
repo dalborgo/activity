@@ -83,7 +83,17 @@ div.table-responsive tr.forpau {
  background-color: mintcream;
 }
 
+div.table-responsive tr.provvisorio {
+  background-color: #FFE4E1;
+}
+
+
 img.logo {
   background-color: #B0E0E6;
   border: 1px lightgray solid;
+  box-shadow: 0 0 1px #999 inset, 0 0 10px rgba(0, 0, 0, 0.2) inset;
+}
+
+div.barra {
+  margin-top: 10px;
 }
