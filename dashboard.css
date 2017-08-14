@@ -97,3 +97,11 @@ img.logo {
 div.barra {
   margin-top: 10px;
 }
+
+a.mylink{
+  color:#EF1919;
+}
+
+a.mylink:hover{
+  color: #c91515;
+}

@@ -12,22 +12,26 @@ if(isset($_GET['mese']))
     $mese=$_GET['mese'];
 if(isset($_GET['giorno']))
     $giorno=$_GET['giorno'];
+if(isset($_GET['cliente']))
+    $clientes=$_GET['cliente'];
+if(isset($_GET['sort']))
+    $sort=$_GET['sort'];
 /*else{
     $res = query("SELECT DAY(data) as giorno FROM `act_phone` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' ORDER BY data desc LIMIT 1", $conn, true);
     $giorno = $res["giorno"];
 }*/
-$res = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `act_phone` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
-$conta=mysqli_num_rows ( $res );
-if ($conta < 1){
+$res = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `act_phone` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data desc LIMIT 1", $conn,true);
+$res2 = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `activity` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data desc LIMIT 1", $conn,true);
+if ($res['data'] > $res2['data'])
+    $res = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `act_phone` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
+else
     $res = query("SELECT DISTINCT(MONTH(date(data))) as data FROM `activity` WHERE YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
-}
 $out3 = '';
 while (($ra = mysqli_fetch_assoc($res))) {
     $mmx = $ra["data"];
     if(!isset($mese)){
         $mese = $mmx;
     }
-
     $mesix=$mesi[intval($mmx)];
     $sce='';
     $act='';
@@ -37,11 +41,12 @@ while (($ra = mysqli_fetch_assoc($res))) {
     }
     $out3.='<li class="nav-item '.$act.'"><a class="nav-link" href="index.php?mese='.$mmx.'">'.$mesix.' '.$sce.'</a></li>';
 }
-$res = query("SELECT DISTINCT(date(data)) as data FROM `act_phone` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
-$conta=mysqli_num_rows ( $res );
-if ($conta < 1){
-    $res = query("SELECT DISTINCT(date(data)) as data FROM `activity` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
-}
+$res = query("SELECT DISTINCT(date(data)) as data FROM `act_phone` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc LIMIT 1", $conn,true);
+$res2 = query("SELECT DISTINCT(date(data)) as data FROM `activity` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc LIMIT 1", $conn, true);
+if ($res['data'] > $res2['data'])
+    $res = query("SELECT DISTINCT(date(data)) as data FROM `act_phone` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
+else
+    $res=query("SELECT DISTINCT(date(data)) as data FROM `activity` WHERE MONTH(data) = '$mese' AND YEAR(data) = '$anno' GROUP BY data ORDER BY data desc", $conn);
 $out2 = '';
 while (($ra = mysqli_fetch_assoc($res))) {
     $phpdate = strtotime( $ra["data"] );
@@ -60,10 +65,13 @@ while (($ra = mysqli_fetch_assoc($res))) {
         $sce = '<span class="sr-only">(current)</span>';
         $act='active';
     }
-    $out2.='<li class="nav-item"><a class="nav-link '.$act.'" href="index.php?mese='.$mm.'&giorno='.$day.'">'.$giorni[$ww].' '.$day.' '.$sce.'</a></li>';
+    $out2.='<li class="nav-item"><a class="nav-link '.$act.'" href="index.php?mese='.$mm.'&giorno='.$day.'">'.$day.' - '.$giorni[$ww].' '.$sce.'</a></li>';
+}
+if(isset($clientes )){
+    $agg="AND cliente = '$clientes'";
 }
 $ricerca = $anno . '-' . $mese . '-' . $giorno;
-$res = query("SELECT * FROM `activity` where DATE(data) = '$ricerca' ORDER BY ora_fine", $conn);
+$res = query("SELECT * FROM `activity` where DATE(data) = '$ricerca' $agg ORDER BY ora_fine", $conn);
 $mini=0;
 $out = '';
 while (($ra = mysqli_fetch_assoc($res))) {
@@ -71,6 +79,7 @@ while (($ra = mysqli_fetch_assoc($res))) {
     $mysqldate = date( 'd/m/Y H:i', $phpdate );
     $phpdate = strtotime( $ra["ora_fine"] );
     $mysqldate_f = date( 'H:i', $phpdate );
+
     $clpau='';
     $ico='';
     if ($ra["tipo"] != 'pausa')
@@ -85,24 +94,43 @@ while (($ra = mysqli_fetch_assoc($res))) {
     if($ra["tipo"] == 'remoto'){
             $ico='<img src="img/supremo.png" style="float: right">';
     }
+    $title='';
     if($ra["tipo"] == 'provvisorio'){
         $clpau='provvisorio';
+        $mysqldate_f='...';
+        $title='title="in progress..." style="cursor:help;"';
     }
     $min=gmdate("H:i", $ra["minuti"]*60);
     $sp = explode(" ", $mysqldate);
     $data_corr=$sp[0];
+    if(!isset($clientes )){
+        $nomes='&cliente='.$ra["cliente"];
+    }
+    $myl=($ra["cliente"]=='Asten')?'':'mylink';
     $out .= '<tr class="'.$clpau.'">
+<td style="color:gray;font-size:small" align="center">' . $ra["ordine"] . '</td>
 <td>' . $ra["proj"] . '</td>
-<td>' . $ra["cliente"] . '</td>
-<td title="codice: '.$ra["ordine"].'">'.$ico.' ' . ucfirst($ra["descr"]) . '</td>
+<td><a href="index.php?mese='.$mese.'&giorno='.$giorno.''.$nomes.'" class="'.$myl.'">' . $ra["cliente"] . '</a></td>
+<td>'.$ico.' ' . ucfirst($ra["descr"]) . '</td>
 <td align="center">' . $sp[1] . '</td>
-<td align="center">' .  $mysqldate_f . '</td>
+<td align="center" '.$title.'>' .  $mysqldate_f . '</td>
 <td align="center">' . $min . '</td>
 </tr>';
 }
 $min2=gmdate("H:i", $mini*60);
 $mini2=0;
-$res = query("SELECT data, verso, minuti, ora_fine, act_phone.id_cliente, nome FROM `act_phone` left join act_cliente on act_phone.id_cliente = act_cliente.id_cliente WHERE DATE(data) = '$ricerca' ORDER BY minuti desc", $conn);
+$agg='';
+
+$sord='';
+$sordlink='&sort=tempo';
+if(isset($sort)){
+    $sord="ora_fine desc,";
+    $sordlink='';
+}
+if(isset($clientes )){
+    $agg="AND nome = '$clientes'";
+}
+$res = query("SELECT data, verso, minuti, ora_fine, act_phone.id_cliente, nome FROM `act_phone` left join act_cliente on act_phone.id_cliente = act_cliente.id_cliente WHERE DATE(data) = '$ricerca' $agg ORDER BY $sord minuti desc", $conn);
 $out4 = '';
 $tmin=0;
 while (($ra = mysqli_fetch_assoc($res))) {
@@ -125,9 +153,13 @@ while (($ra = mysqli_fetch_assoc($res))) {
     }
     $min=$mmm[0].':'.$mmm[1];
     $sp = explode(" ", $mysqldate);
+    $nomes='';
+    if(!isset($clientes )){
+        $nomes='&cliente='.$ra["nome"];
+    }
     $out4 .= '<tr class="'.$clpau.'">
 <td align="center">' . $verso . '</td>
-<td>' . $ra["nome"] . '</td>
+<td><a href="index.php?mese='.$mese.'&giorno='.$giorno.''.$nomes.'" class="">' . $ra["nome"] . '</a></td>
 <td align="center">' . $ra["id_cliente"] . '</td>
 <td align="center">' . $sp[1] . '</td>
 <td align="center">' .  $mysqldate_f . '</td>
@@ -213,6 +245,7 @@ $min4=gmdate("H:i:s", $mini2);
                 <table class="table table-striped">
                     <thead>
                     <tr>
+                        <th></th>
                         <th>Progetto</th>
                         <th>Cliente</th>
                         <th>Descrizione</th>
@@ -226,7 +259,7 @@ $min4=gmdate("H:i:s", $mini2);
                     </tbody>
                     <tfoot>
                     <tr>
-                        <td colspan="5" align="right"><strong>Totale lavorato:</strong></td>
+                        <td colspan="6" align="right"><strong>Totale lavorato:</strong></td>
                         <td colspan="1" align="center"><?=$min2?></td>
                     </tr>
                     </tfoot>
@@ -245,7 +278,7 @@ $min4=gmdate("H:i:s", $mini2);
                         <th>Cliente</th>
                         <th style="text-align: center">Numero</th>
                         <th style="text-align: center">Ora Inizio</th>
-                        <th style="text-align: center">Ora Fine</th>
+                        <th style="text-align: center"><a href="<?="index.php?mese=$mese&giorno=$giorno$sordlink"?>">Ora Fine</a></th>
                         <th style="text-align: center">Tempo</th>
                     </tr>
                     </thead>
